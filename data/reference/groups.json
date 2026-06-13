@@ -1,0 +1,18 @@
+{
+  "_fuente": "Sorteo final del Mundial 2026 (2025-12-05, Washington DC). La pertenencia a cada grupo se derivo de forma independiente del propio fixture (componentes conexas del grafo de partidos de fase de grupos) y coincide 100% con el sorteo oficial. Las etiquetas A-L vienen del sorteo. Los nombres de los equipos estan normalizados a los del dataset historico (martj42): p. ej. Czechia=Czech Republic, Turkiye=Turkey, Cote d'Ivoire=Ivory Coast, Cabo Verde=Cape Verde.",
+  "_orden": "El orden dentro de cada grupo es la posicion del sorteo (1 = cabeza de serie / Bombo 1).",
+  "grupos": {
+    "A": ["Mexico", "South Africa", "South Korea", "Czech Republic"],
+    "B": ["Canada", "Bosnia and Herzegovina", "Qatar", "Switzerland"],
+    "C": ["Brazil", "Morocco", "Haiti", "Scotland"],
+    "D": ["United States", "Paraguay", "Australia", "Turkey"],
+    "E": ["Germany", "Curaçao", "Ivory Coast", "Ecuador"],
+    "F": ["Netherlands", "Japan", "Sweden", "Tunisia"],
+    "G": ["Belgium", "Egypt", "Iran", "New Zealand"],
+    "H": ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"],
+    "I": ["France", "Senegal", "Iraq", "Norway"],
+    "J": ["Argentina", "Algeria", "Austria", "Jordan"],
+    "K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
+    "L": ["England", "Croatia", "Ghana", "Panama"]
+  }
+}

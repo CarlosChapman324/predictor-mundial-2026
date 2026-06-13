@@ -1,0 +1,21 @@
+{
+  "_fuente": "Sedes oficiales del Mundial 2026 (Wikipedia). 'dataset_city' es el nombre de la ciudad tal como aparece en results.csv (martj42), usado para unir el calendario con la sede.",
+  "sedes": [
+    {"stadium": "Estadio Azteca",          "city": "Mexico City",              "country": "Mexico",        "dataset_city": "Mexico City"},
+    {"stadium": "Estadio Akron",            "city": "Guadalajara",              "country": "Mexico",        "dataset_city": "Zapopan"},
+    {"stadium": "Estadio BBVA",             "city": "Monterrey",                "country": "Mexico",        "dataset_city": "Guadalupe"},
+    {"stadium": "BMO Field",                "city": "Toronto",                  "country": "Canada",        "dataset_city": "Toronto"},
+    {"stadium": "BC Place",                 "city": "Vancouver",                "country": "Canada",        "dataset_city": "Vancouver"},
+    {"stadium": "MetLife Stadium",          "city": "New York/New Jersey",      "country": "United States", "dataset_city": "East Rutherford"},
+    {"stadium": "AT&T Stadium",             "city": "Dallas",                   "country": "United States", "dataset_city": "Arlington"},
+    {"stadium": "SoFi Stadium",             "city": "Los Angeles",              "country": "United States", "dataset_city": "Inglewood"},
+    {"stadium": "Arrowhead Stadium",        "city": "Kansas City",              "country": "United States", "dataset_city": "Kansas City"},
+    {"stadium": "Levi's Stadium",           "city": "San Francisco Bay Area",   "country": "United States", "dataset_city": "Santa Clara"},
+    {"stadium": "NRG Stadium",              "city": "Houston",                  "country": "United States", "dataset_city": "Houston"},
+    {"stadium": "Lincoln Financial Field",  "city": "Philadelphia",             "country": "United States", "dataset_city": "Philadelphia"},
+    {"stadium": "Mercedes-Benz Stadium",    "city": "Atlanta",                  "country": "United States", "dataset_city": "Atlanta"},
+    {"stadium": "Lumen Field",              "city": "Seattle",                  "country": "United States", "dataset_city": "Seattle"},
+    {"stadium": "Hard Rock Stadium",        "city": "Miami",                    "country": "United States", "dataset_city": "Miami Gardens"},
+    {"stadium": "Gillette Stadium",         "city": "Boston",                   "country": "United States", "dataset_city": "Foxborough"}
+  ]
+}

@@ -1,0 +1,41 @@
+[project]
+name = "predictor-mundial"
+version = "0.1.0"
+description = "Simulacion y proyeccion estadistica del Mundial 2026 (pieza de portafolio)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Manejo de datos
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pyarrow>=17",        # backend de Parquet para guardar/leer en disco
+    # Ajuste del modelo (Fase 2 en adelante)
+    "scipy>=1.13",
+    "statsmodels>=0.14",
+    # Ingesta de datos (solo Capa 2 / scripts; el modelo nunca llama a red)
+    "requests>=2.32",
+    # Dashboard y visualizaciones propias (Fase 6 en adelante)
+    "streamlit>=1.40",
+    "plotly>=5.24",
+]
+
+# Dependencias de desarrollo (no se instalan en produccion).
+# uv las gestiona con "uv sync" e instala en el mismo entorno virtual.
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+]
+
+# La app se ejecuta desde el repo; no se empaqueta ni se publica en PyPI.
+# package = false hace que uv solo gestione el entorno y las dependencias,
+# sin intentar construir "predictor-mundial" como un paquete instalable.
+[tool.uv]
+package = false
+
+# Configuracion de pytest.
+# pythonpath = ["."] permite importar los paquetes de primer nivel
+# (model, tournament, data, ...) en los tests sin instalar nada.
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

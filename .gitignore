@@ -1,0 +1,22 @@
+# Entorno virtual (uv lo recrea con "uv sync")
+.venv/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Datos descargados y derivados: se regeneran con los scripts de ingesta,
+# no se versionan. Lo unico que va a git en data/ es la carpeta reference/
+# (fixture curado a mano).
+data/raw/
+data/processed/
+
+# Configuracion local de Claude Code (especifica de la maquina)
+.claude/settings.local.json
+
+# Sistema operativo / editores
+.DS_Store
+.vscode/
+.idea/
