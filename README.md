@@ -56,6 +56,18 @@ uv sync
 # Construir los datos de la Capa 1 (historico + Elo + fixture)
 uv run python -m scripts.build_data
 
+# Ajustar el modelo de goles (Poisson + Dixon-Coles) y guardar parametros
+uv run python -m scripts.build_model
+
+# Correr el Monte Carlo del torneo (10.000 simulaciones) y guardar probabilidades
+uv run python -m scripts.build_simulation
+
+# Validar el modelo contra torneos pasados (backtesting)
+uv run python -m scripts.build_validation
+
+# Comparar el modelo con el mercado (requiere THE_ODDS_API_KEY o un CSV de cuotas)
+uv run python -m scripts.build_market
+
 # Correr los tests
 uv run pytest
 ```
@@ -66,9 +78,9 @@ En construccion por fases. El detalle de cada fase vive en `PLAN.md`.
 
 - [x] Fase 0 — Setup del entorno y estructura
 - [x] Fase 1 — Datos Capa 1 (historico, Elo, fixture)
-- [ ] Fase 2 — Modelo de goles (Poisson + Dixon-Coles)
-- [ ] Fase 3 — Motor del torneo + Monte Carlo
-- [ ] Fase 4 — Validacion / backtesting
-- [ ] Fase 5 — Modelo vs mercado
+- [x] Fase 2 — Modelo de goles (Poisson + Dixon-Coles)
+- [x] Fase 3 — Motor del torneo + Monte Carlo
+- [x] Fase 4 — Validacion / backtesting
+- [x] Fase 5 — Modelo vs mercado
 - [ ] Fase 6 — Dashboard Streamlit
 - [ ] Fase 7 — Capa viva

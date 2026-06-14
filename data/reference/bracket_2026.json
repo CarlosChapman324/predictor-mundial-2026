@@ -1,0 +1,36 @@
+{
+  "_fuente": "Cuadro oficial del Mundial 2026 (Wikipedia / FIFA). Los cruces de la Ronda de 32 (ganadores y segundos) y el arbol de eliminatorias estan verificados. La asignacion exacta de los 8 mejores terceros a sus llaves (Anexo C del reglamento, 495 combinaciones) se aproxima en el motor con una regla que solo evita que un tercero enfrente al ganador de su propio grupo; el efecto sobre las probabilidades agregadas es minimo.",
+  "_slots": "Cada partido de la Ronda de 32 tiene dos slots. type: 'winner' (1o de grupo), 'runner_up' (2o de grupo) o 'third' (uno de los 8 mejores terceros, asignado por el motor).",
+  "round_of_32": [
+    {"match": 73, "slots": [{"type": "runner_up", "group": "A"}, {"type": "runner_up", "group": "B"}]},
+    {"match": 74, "slots": [{"type": "winner", "group": "C"}, {"type": "runner_up", "group": "F"}]},
+    {"match": 75, "slots": [{"type": "winner", "group": "E"}, {"type": "third"}]},
+    {"match": 76, "slots": [{"type": "winner", "group": "F"}, {"type": "runner_up", "group": "C"}]},
+    {"match": 77, "slots": [{"type": "runner_up", "group": "E"}, {"type": "runner_up", "group": "I"}]},
+    {"match": 78, "slots": [{"type": "winner", "group": "I"}, {"type": "third"}]},
+    {"match": 79, "slots": [{"type": "winner", "group": "A"}, {"type": "third"}]},
+    {"match": 80, "slots": [{"type": "winner", "group": "L"}, {"type": "third"}]},
+    {"match": 81, "slots": [{"type": "winner", "group": "D"}, {"type": "third"}]},
+    {"match": 82, "slots": [{"type": "winner", "group": "G"}, {"type": "third"}]},
+    {"match": 83, "slots": [{"type": "winner", "group": "H"}, {"type": "runner_up", "group": "J"}]},
+    {"match": 84, "slots": [{"type": "runner_up", "group": "K"}, {"type": "runner_up", "group": "L"}]},
+    {"match": 85, "slots": [{"type": "winner", "group": "B"}, {"type": "third"}]},
+    {"match": 86, "slots": [{"type": "runner_up", "group": "D"}, {"type": "runner_up", "group": "G"}]},
+    {"match": 87, "slots": [{"type": "winner", "group": "J"}, {"type": "runner_up", "group": "H"}]},
+    {"match": 88, "slots": [{"type": "winner", "group": "K"}, {"type": "third"}]}
+  ],
+  "tree": {
+    "89": [74, 77], "90": [73, 75], "91": [76, 78], "92": [79, 80],
+    "93": [83, 84], "94": [81, 82], "95": [86, 88], "96": [85, 87],
+    "97": [89, 90], "98": [93, 94], "99": [91, 92], "100": [95, 96],
+    "101": [97, 98], "102": [99, 100],
+    "104": [101, 102]
+  },
+  "rounds": {
+    "round_of_32": [73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88],
+    "round_of_16": [89, 90, 91, 92, 93, 94, 95, 96],
+    "quarter_finals": [97, 98, 99, 100],
+    "semi_finals": [101, 102],
+    "final": [104]
+  }
+}

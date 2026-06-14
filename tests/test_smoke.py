@@ -27,8 +27,9 @@ def test_paquete_importa(name):
     importlib.import_module(name)
 
 
-def test_los_esqueletos_de_fases_futuras_no_estan_implementados():
-    from model import goals
+def test_los_modulos_clave_estan_implementados():
+    # Ya no quedan esqueletos NotImplementedError en el nucleo: humo positivo.
+    from market import odds
 
-    with pytest.raises(NotImplementedError):
-        goals.score_matrix(1.4, 1.1, rho=0.0)
+    probs = odds.implied_probabilities([2.0, 4.0, 4.0])
+    assert abs(float(probs.sum()) - 1.0) < 1e-9
