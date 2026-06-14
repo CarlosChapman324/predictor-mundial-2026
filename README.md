@@ -68,6 +68,9 @@ uv run python -m scripts.build_validation
 # Comparar el modelo con el mercado (requiere THE_ODDS_API_KEY o un CSV de cuotas)
 uv run python -m scripts.build_market
 
+# Lanzar el dashboard interactivo
+uv run streamlit run app/streamlit_app.py
+
 # Correr los tests
 uv run pytest
 ```
@@ -82,5 +85,5 @@ En construccion por fases. El detalle de cada fase vive en `PLAN.md`.
 - [x] Fase 3 — Motor del torneo + Monte Carlo
 - [x] Fase 4 — Validacion / backtesting
 - [x] Fase 5 — Modelo vs mercado
-- [ ] Fase 6 — Dashboard Streamlit
+- [x] Fase 6 — Dashboard Streamlit
 - [ ] Fase 7 — Capa viva

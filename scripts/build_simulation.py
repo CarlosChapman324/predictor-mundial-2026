@@ -14,8 +14,10 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
+from model import markets as mk
 from model.goals import FittedGoalModel
 from tournament import format2026, montecarlo
 
@@ -36,6 +38,40 @@ def load_fitted_model() -> FittedGoalModel:
         defense=dict(zip(strengths["team"], strengths["defense"])),
         meta=params.get("meta", {}),
     )
+
+
+def build_match_markets(model: FittedGoalModel, fixture: pd.DataFrame) -> pd.DataFrame:
+    """Precomputa los mercados de la Capa 1 de cada partido de fase de grupos.
+
+    La app solo lee este Parquet: la matematica del modelo no se ejecuta en la
+    capa de presentacion. La localia se aplica al anfitrion (aunque sea el equipo
+    visitante del calendario), reorientando la matriz cuando hace falta.
+    """
+    goals_axis = np.arange(11)
+    rows = []
+    for r in fixture.itertuples(index=False):
+        adv = montecarlo._host_with_advantage(r.home_team, r.away_team, r.country)
+        if adv == r.away_team:
+            # El anfitrion es el visitante: matriz en su marco y transpuesta.
+            matrix = model.score_matrix(r.away_team, r.home_team, home_advantage=True).T
+        else:
+            matrix = model.score_matrix(r.home_team, r.away_team, home_advantage=(adv == r.home_team))
+        bundle = mk.all_markets(matrix)
+        rows.append({
+            "date": r.date, "group": r.group,
+            "home_team": r.home_team, "away_team": r.away_team,
+            "played": bool(r.played), "home_score": r.home_score, "away_score": r.away_score,
+            "lambda_home": float((matrix.sum(axis=1) * goals_axis).sum()),
+            "lambda_away": float((matrix.sum(axis=0) * goals_axis).sum()),
+            "p_home": bundle["result"]["home"], "p_draw": bundle["result"]["draw"], "p_away": bundle["result"]["away"],
+            "over_1_5": bundle["over_under"]["1.5"]["over"],
+            "over_2_5": bundle["over_under"]["2.5"]["over"],
+            "over_3_5": bundle["over_under"]["3.5"]["over"],
+            "btts_yes": bundle["btts"]["yes"],
+            "cs_home": bundle["clean_sheet"]["home"], "cs_away": bundle["clean_sheet"]["away"],
+            "exact_scores": json.dumps(bundle["exact_score"]),
+        })
+    return pd.DataFrame(rows)
 
 
 def main(n_sims: int) -> None:
@@ -60,6 +96,11 @@ def main(n_sims: int) -> None:
         "fixture_played": played,
     }
     (PROCESSED_DIR / "simulation_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+    # Mercados de la Capa 1 por partido, para el dashboard.
+    match_markets = build_match_markets(model, fixture)
+    match_markets.to_parquet(PROCESSED_DIR / "match_markets.parquet", index=False)
+    print(f"Mercados por partido guardados: {len(match_markets)} partidos")
 
     pct = lambda x: f"{x:6.1%}"
     print("\nProbabilidad de ser campeon (top 15):")
