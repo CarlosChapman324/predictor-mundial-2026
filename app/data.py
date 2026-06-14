@@ -84,3 +84,13 @@ def simulation_meta():
 @st.cache_data(show_spinner=False)
 def predictions_history():
     return _read_parquet("predictions_history.parquet")
+
+
+@st.cache_data(show_spinner=False)
+def golden_boot():
+    return _read_parquet("golden_boot.parquet")
+
+
+@st.cache_data(show_spinner=False)
+def match_scorers():
+    return _read_parquet("match_scorers.parquet")

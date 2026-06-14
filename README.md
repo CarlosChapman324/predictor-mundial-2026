@@ -68,6 +68,9 @@ uv run python -m scripts.build_validation
 # Comparar el modelo con el mercado (requiere THE_ODDS_API_KEY o un CSV de cuotas)
 uv run python -m scripts.build_market
 
+# Mercados de goleadores de la Capa 2 (experimental: goleadores y Bota de Oro)
+uv run python -m scripts.build_scorers
+
 # Recalcular la capa viva tras cada jornada (rehace todo y guarda el historico)
 uv run python -m scripts.refresh
 
@@ -90,3 +93,5 @@ En construccion por fases. El detalle de cada fase vive en `PLAN.md`.
 - [x] Fase 5 — Modelo vs mercado
 - [x] Fase 6 — Dashboard Streamlit
 - [x] Fase 7 — Capa viva
+- [x] Fase 8 — Capa 2: goleadores y Bota de Oro (experimental)
+- [ ] Fase 9 — Pulido y deploy

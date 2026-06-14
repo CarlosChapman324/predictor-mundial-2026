@@ -15,6 +15,7 @@ data/processed/
 
 # Configuracion local de Claude Code (especifica de la maquina)
 .claude/settings.local.json
+.claude/launch.json
 
 # Sistema operativo / editores
 .DS_Store

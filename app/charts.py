@@ -195,3 +195,20 @@ def probability_evolution(history, n: int = 8):
     style_fig(fig, height=470)
     fig.update_layout(colorway=CATEGORICAL)
     return fig
+
+
+def golden_boot_bar(golden, n: int = 12):
+    """Barras horizontales de probabilidad de Bota de Oro (top n goleadores)."""
+    d = golden.head(n).iloc[::-1]
+    labels = [f"{r.player} ({r.team})" for r in d.itertuples(index=False)]
+    fig = go.Figure(go.Bar(
+        x=d["win_prob"] * 100, y=labels, orientation="h",
+        marker=dict(color=d["win_prob"], colorscale=BLUE_SCALE, line=dict(width=0)),
+        text=[f"{v * 100:.1f}%" for v in d["win_prob"]],
+        textposition="outside", textfont=dict(color=COLORS["text"]),
+        hovertemplate="%{y}: %{x:.1f}%<extra></extra>",
+    ))
+    fig.update_layout(title="Probabilidad de Bota de Oro (experimental)")
+    fig.update_xaxes(ticksuffix="%", showgrid=True)
+    fig.update_yaxes(showgrid=False)
+    return style_fig(fig, height=440)

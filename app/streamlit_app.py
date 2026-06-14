@@ -42,8 +42,8 @@ def pct(x: float, decimals: int = 1) -> str:
     return f"{x * 100:.{decimals}f}%"
 
 
-tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market = st.tabs(
-    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado"]
+tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market, tab_scorers = st.tabs(
+    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado", "Goleadores"]
 )
 
 
@@ -205,3 +205,42 @@ with tab_market:
             )
         st.caption("El mercado es muy eficiente: una discrepancia grande suele delatar un dato "
                    "que le falta al modelo, no una oportunidad real.")
+
+
+# --- Goleadores (Capa 2, experimental) -------------------------------------
+with tab_scorers:
+    gb = data.golden_boot()
+    if gb is None or gb.empty:
+        st.info("Faltan los goleadores. Corre: uv run python -m scripts.build_scorers")
+    else:
+        st.warning("Capa 2 experimental (confianza baja): usa a los goleadores de los ultimos "
+                   "4 anos como proxy del plantel; no incorpora convocatorias ni minutos jugados.")
+        top, runner = gb.iloc[0], gb.iloc[1]
+        c1, c2, c3 = st.columns(3)
+        c1.markdown(theme.kpi(top["player"], pct(top["win_prob"]), f"Bota de Oro &middot; {top['team']}", accent=True), unsafe_allow_html=True)
+        c2.markdown(theme.kpi("Goles esperados", f"{top['expected_goals']:.1f}", "del favorito en el torneo"), unsafe_allow_html=True)
+        c3.markdown(theme.kpi(runner["player"], pct(runner["win_prob"]), f"2o &middot; {runner['team']}"), unsafe_allow_html=True)
+        st.write("")
+        left, right = st.columns([3, 2])
+        with left:
+            st.plotly_chart(charts.golden_boot_bar(gb, n=12), width="stretch")
+        with right:
+            t = gb.head(15)[["player", "team", "expected_goals", "win_prob"]].copy()
+            t.columns = ["Jugador", "Seleccion", "Goles esp.", "Bota de Oro"]
+            st.dataframe(
+                t.style.format({"Goles esp.": "{:.2f}", "Bota de Oro": "{:.1%}"}),
+                width="stretch", hide_index=True, height=440,
+            )
+        ms = data.match_scorers()
+        if ms is not None and not ms.empty:
+            st.markdown("**Goleadores por partido**")
+            ms = ms.copy()
+            ms["match"] = ms["home_team"] + " vs " + ms["away_team"]
+            pick = st.selectbox("Partido", sorted(ms["match"].unique()))
+            sel = ms[ms["match"] == pick].sort_values("anytime", ascending=False).head(10)
+            s = sel[["player", "player_team", "anytime"]].copy()
+            s.columns = ["Jugador", "Seleccion", "Marca en algun momento"]
+            st.dataframe(
+                s.style.format({"Marca en algun momento": "{:.1%}"}),
+                width="stretch", hide_index=True,
+            )
