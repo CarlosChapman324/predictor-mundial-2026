@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import plotly.graph_objects as go
 
-from app.theme import BLUE_SCALE, COLORS, style_fig
+from app.theme import BLUE_SCALE, CATEGORICAL, COLORS, style_fig
 
 # Rondas del torneo en orden, con su etiqueta para el dashboard.
 ROUND_COLUMNS = [
@@ -170,3 +170,28 @@ def market_scatter(comp):
     fig.update_xaxes(title="Probabilidad del mercado", tickformat=".0%", range=[0, 1])
     fig.update_yaxes(title="Probabilidad del modelo", tickformat=".0%", range=[0, 1])
     return style_fig(fig, height=470)
+
+
+def probability_evolution(history, n: int = 8):
+    """Lineas de la probabilidad de campeon a medida que avanza el torneo.
+
+    Eje x: partidos jugados (0 = pronostico sin condicionar). Una linea por cada
+    una de las n selecciones mas probables en la foto mas reciente.
+    """
+    latest = history["matches_played"].max()
+    top = history[history["matches_played"] == latest].nlargest(n, "champion")["team"].tolist()
+    fig = go.Figure()
+    for i, team in enumerate(top):
+        d = history[history["team"] == team].sort_values("matches_played")
+        color = CATEGORICAL[i % len(CATEGORICAL)]
+        fig.add_trace(go.Scatter(
+            x=d["matches_played"], y=d["champion"] * 100, mode="lines+markers", name=team,
+            line=dict(color=color, width=2), marker=dict(color=color, size=7),
+            hovertemplate=f"{team}<br>%{{x}} jugados &middot; %{{y:.1f}}%<extra></extra>",
+        ))
+    fig.update_layout(title="Evolucion de la probabilidad de campeon")
+    fig.update_xaxes(title="Partidos jugados", dtick=8, showgrid=False)
+    fig.update_yaxes(title="Campeon", ticksuffix="%")
+    style_fig(fig, height=470)
+    fig.update_layout(colorway=CATEGORICAL)
+    return fig

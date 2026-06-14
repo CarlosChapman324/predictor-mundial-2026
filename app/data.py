@@ -79,3 +79,8 @@ def model_params():
 @st.cache_data(show_spinner=False)
 def simulation_meta():
     return _read_json(PROCESSED / "simulation_meta.json")
+
+
+@st.cache_data(show_spinner=False)
+def predictions_history():
+    return _read_parquet("predictions_history.parquet")

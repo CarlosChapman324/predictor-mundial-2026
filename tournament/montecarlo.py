@@ -39,9 +39,13 @@ def _host_with_advantage(home_team, away_team, venue_country):
     return None
 
 
-def _prepare_group_matches(fixture: pd.DataFrame, model: FittedGoalModel, max_goals: int):
+def _prepare_group_matches(fixture: pd.DataFrame, model: FittedGoalModel, max_goals: int,
+                           ignore_played: bool = False):
     """Para cada partido de grupo decide quien tiene localia y precomputa su
     distribucion de marcadores (o fija el resultado si ya se jugo).
+
+    ignore_played=True trata TODOS los partidos como pendientes (sirve para el
+    pronostico 'pre-torneo', sin condicionar a lo que ya paso).
     """
     width = max_goals + 1
     prepared = []
@@ -55,7 +59,7 @@ def _prepare_group_matches(fixture: pd.DataFrame, model: FittedGoalModel, max_go
         home_adv = adv_team is not None
 
         match = {"group": row.group, "team_a": team_a, "team_b": team_b}
-        if bool(row.played):
+        if bool(row.played) and not ignore_played:
             ga, gb = int(row.home_score), int(row.away_score)
             match["fixed"] = (gb, ga) if swap else (ga, gb)  # goles (team_a, team_b)
         else:
@@ -141,10 +145,11 @@ def _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko
     return positions, qualified, stage, champion
 
 
-def simulate_tournament(fixture, model, bracket, *, final_key=None, max_goals=10, rng=None):
+def simulate_tournament(fixture, model, bracket, *, final_key=None, max_goals=10, rng=None,
+                        ignore_played=False):
     """Simula UN torneo. Util para tests y para inspeccionar una corrida."""
     rng = rng or np.random.default_rng()
-    prepared = _prepare_group_matches(fixture, model, max_goals)
+    prepared = _prepare_group_matches(fixture, model, max_goals, ignore_played=ignore_played)
     teams = sorted(set(fixture["home_team"]) | set(fixture["away_team"]))
     padv = _advance_probability(model, teams, max_goals)
 
@@ -172,16 +177,19 @@ def _group_structure(prepared):
 
 
 def run_monte_carlo(
-    fixture, model, bracket, *, n_sims=10_000, final_key=None, max_goals=10, seed=0
+    fixture, model, bracket, *, n_sims=10_000, final_key=None, max_goals=10, seed=0,
+    ignore_played=False,
 ) -> pd.DataFrame:
     """Corre n_sims torneos y agrega las probabilidades por seleccion.
 
     Devuelve un DataFrame con, por equipo: probabilidad de ganar el grupo, de
     quedar segundo, de clasificar como tercero, de clasificar (llegar a la Ronda
     de 32), de alcanzar cada ronda y de ser campeon.
+
+    ignore_played=True ignora los resultados reales (pronostico pre-torneo).
     """
     rng = np.random.default_rng(seed)
-    prepared = _prepare_group_matches(fixture, model, max_goals)
+    prepared = _prepare_group_matches(fixture, model, max_goals, ignore_played=ignore_played)
     teams = sorted(set(fixture["home_team"]) | set(fixture["away_team"]))
     padv = _advance_probability(model, teams, max_goals)
     group_to_teams, _ = _group_structure(prepared)

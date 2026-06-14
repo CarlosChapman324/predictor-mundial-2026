@@ -68,6 +68,9 @@ uv run python -m scripts.build_validation
 # Comparar el modelo con el mercado (requiere THE_ODDS_API_KEY o un CSV de cuotas)
 uv run python -m scripts.build_market
 
+# Recalcular la capa viva tras cada jornada (rehace todo y guarda el historico)
+uv run python -m scripts.refresh
+
 # Lanzar el dashboard interactivo
 uv run streamlit run app/streamlit_app.py
 
@@ -86,4 +89,4 @@ En construccion por fases. El detalle de cada fase vive en `PLAN.md`.
 - [x] Fase 4 — Validacion / backtesting
 - [x] Fase 5 — Modelo vs mercado
 - [x] Fase 6 — Dashboard Streamlit
-- [ ] Fase 7 — Capa viva
+- [x] Fase 7 — Capa viva

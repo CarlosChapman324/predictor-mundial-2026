@@ -156,3 +156,17 @@ def test_simular_un_torneo_da_un_campeon_y_32_clasificados():
     assert len(qualified) == 32          # 24 primeros/segundos + 8 terceros
     assert champion in qualified
     assert stage[champion] == montecarlo.STAGE_CHAMPION
+
+
+def test_ignore_played_trata_los_jugados_como_pendientes():
+    # Capa viva: con ignore_played=True, un partido ya jugado se vuelve a simular
+    # (no se fija su resultado), util para el pronostico sin condicionar.
+    groups = fixture_loader.load_groups(REFERENCE_DIR)
+    fx = _synthetic_fixture(groups)
+    fx.loc[0, ["played", "home_score", "away_score"]] = [True, 2, 0]
+    model = _hand_model(groups["team"])
+
+    normal = montecarlo._prepare_group_matches(fx, model, 10, ignore_played=False)
+    ignored = montecarlo._prepare_group_matches(fx, model, 10, ignore_played=True)
+    assert "fixed" in normal[0]       # condicionado: resultado fijo
+    assert "fixed" not in ignored[0]  # sin condicionar: se muestrea

@@ -42,8 +42,8 @@ def pct(x: float, decimals: int = 1) -> str:
     return f"{x * 100:.{decimals}f}%"
 
 
-tab_champ, tab_groups, tab_path, tab_match, tab_val, tab_market = st.tabs(
-    ["Campeon", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado"]
+tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market = st.tabs(
+    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado"]
 )
 
 
@@ -67,6 +67,22 @@ with tab_champ:
             table.style.format({c: "{:.1%}" for c in ["Campeon", "Final", "Semis", "Clasifica"]}),
             width="stretch", hide_index=True, height=470,
         )
+
+
+# --- Evolucion -------------------------------------------------------------
+with tab_evo:
+    history = data.predictions_history()
+    if history is None or history.empty:
+        st.info("Aun no hay historico. Corre `uv run python -m scripts.refresh` tras cada "
+                "jornada para registrar como se mueven las probabilidades.")
+    elif history["matches_played"].nunique() < 2:
+        latest = int(history["matches_played"].max())
+        st.info(f"Solo hay una foto ({latest} partidos jugados). El grafico se llena al "
+                "recalcular tras jugarse mas partidos: `uv run python -m scripts.refresh`.")
+    else:
+        st.plotly_chart(charts.probability_evolution(history, n=8), width="stretch")
+        st.caption("Cada foto se guarda con timestamp al recalcular. El punto en 0 es el "
+                   "pronostico sin condicionar; las lineas se mueven al fijar resultados reales.")
 
 
 # --- Grupos ----------------------------------------------------------------

@@ -28,6 +28,9 @@ COLORS = {
 # Escala azul para barras y mapas de calor.
 BLUE_SCALE = [[0.0, "#0E1B30"], [0.35, "#16447E"], [0.7, "#2F81F7"], [1.0, "#7CC0FF"]]
 
+# Paleta categorica para series multiples (lineas), legible sobre fondo oscuro.
+CATEGORICAL = ["#2F81F7", "#E8A23D", "#3FB950", "#A371F7", "#2DD4BF", "#F778BA", "#F85149", "#58A6FF"]
+
 FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 MONO = "'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace"
 
