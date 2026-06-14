@@ -15,12 +15,27 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 PROCESSED = ROOT / "data" / "processed"
+SNAPSHOT = ROOT / "data" / "snapshot"  # congelado versionado para el deploy
 REFERENCE = ROOT / "data" / "reference"
 
 
+def _resolve(name: str) -> Path | None:
+    """Busca un archivo primero en processed (local) y luego en snapshot (deploy)."""
+    for base in (PROCESSED, SNAPSHOT):
+        path = base / name
+        if path.exists():
+            return path
+    return None
+
+
 def _read_parquet(name: str):
-    path = PROCESSED / name
-    return pd.read_parquet(path) if path.exists() else None
+    path = _resolve(name)
+    return pd.read_parquet(path) if path is not None else None
+
+
+def _read_processed_json(name: str):
+    path = _resolve(name)
+    return json.loads(path.read_text(encoding="utf-8")) if path is not None else None
 
 
 def _read_json(path: Path):
@@ -73,12 +88,12 @@ def groups():
 
 @st.cache_data(show_spinner=False)
 def model_params():
-    return _read_json(PROCESSED / "goal_model_params.json")
+    return _read_processed_json("goal_model_params.json")
 
 
 @st.cache_data(show_spinner=False)
 def simulation_meta():
-    return _read_json(PROCESSED / "simulation_meta.json")
+    return _read_processed_json("simulation_meta.json")
 
 
 @st.cache_data(show_spinner=False)

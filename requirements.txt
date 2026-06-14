@@ -1,0 +1,11 @@
+# Dependencias para reproducir el entorno con pip o desplegar en Streamlit
+# Community Cloud. La fuente de verdad del desarrollo es pyproject.toml + uv.lock;
+# este archivo refleja las mismas dependencias para entornos basados en pip.
+pandas>=2.2
+numpy>=1.26
+pyarrow>=17
+scipy>=1.13
+statsmodels>=0.14
+requests>=2.32
+streamlit>=1.40
+plotly>=5.24

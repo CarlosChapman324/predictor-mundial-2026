@@ -1,0 +1,12 @@
+# Tema base de Streamlit alineado con la estetica del dashboard (terminal oscura,
+# acento azul). El CSS propio de app/theme.py refina el resto; esto asegura que el
+# chrome de Streamlit (menus, widgets) combine desde el primer render.
+[theme]
+base = "dark"
+primaryColor = "#2F81F7"
+backgroundColor = "#0A0E16"
+secondaryBackgroundColor = "#121A2A"
+textColor = "#E6EDF3"
+
+[browser]
+gatherUsageStats = false
