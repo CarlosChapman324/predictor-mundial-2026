@@ -13,6 +13,9 @@ __pycache__/
 data/raw/
 data/processed/
 
+# Claves de API (nunca se versionan; ver .env.example)
+.env
+
 # Configuracion local de Claude Code (especifica de la maquina)
 .claude/settings.local.json
 .claude/launch.json
