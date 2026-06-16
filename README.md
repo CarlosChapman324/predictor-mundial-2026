@@ -110,7 +110,10 @@ El dashboard se publica en Streamlit Community Cloud (punto de entrada
 `app/streamlit_app.py`). Para que la app desplegada funcione sin reconstruir
 nada, los datos que consume viven congelados y versionados en `data/snapshot/`
 (116 KB); la app lee de `data/processed/` en local y cae a `data/snapshot/` si no
-existe. Para publicar una actualizacion tras una jornada:
+existe. Un workflow de GitHub Actions (`.github/workflows/daily-refresh.yml`) hace esto
+solo cada dia: corre el pipeline completo, refresca el snapshot y lo commitea, y
+Streamlit Cloud redespliega. Necesita los secrets `THE_ODDS_API_KEY` y
+`APISPORTS_KEY` configurados en el repo. Para hacerlo a mano tras una jornada:
 
 ```bash
 uv run python -m scripts.refresh        # rehace datos, modelo y simulacion
