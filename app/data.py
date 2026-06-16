@@ -109,3 +109,13 @@ def golden_boot():
 @st.cache_data(show_spinner=False)
 def match_scorers():
     return _read_parquet("match_scorers.parquet")
+
+
+@st.cache_data(show_spinner=False)
+def props_predictions():
+    return _read_parquet("props_predictions.parquet")
+
+
+@st.cache_data(show_spinner=False)
+def value_analysis():
+    return _read_parquet("value_analysis.parquet")

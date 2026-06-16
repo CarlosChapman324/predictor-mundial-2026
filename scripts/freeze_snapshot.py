@@ -34,6 +34,8 @@ SNAPSHOT_FILES = [
     "backtest_calibration.parquet",
     "market_comparison.parquet",
     "predictions_history.parquet",
+    "props_predictions.parquet",
+    "value_analysis.parquet",
 ]
 
 

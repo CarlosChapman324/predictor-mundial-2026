@@ -42,8 +42,8 @@ def pct(x: float, decimals: int = 1) -> str:
     return f"{x * 100:.{decimals}f}%"
 
 
-tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market, tab_scorers = st.tabs(
-    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado", "Goleadores"]
+tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market, tab_scorers, tab_value = st.tabs(
+    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado", "Goleadores", "Valor"]
 )
 
 
@@ -151,6 +151,33 @@ with tab_match:
         with right:
             st.plotly_chart(charts.secondary_markets_bar(row), width="stretch")
 
+        # Capa 2 (experimental): props del partido.
+        props = data.props_predictions()
+        if props is not None:
+            pm = props[(props["home_team"] == row["home_team"]) & (props["away_team"] == row["away_team"])]
+            if not pm.empty:
+                pr = pm.iloc[0]
+                st.divider()
+                st.markdown("**Mercados de Capa 2** (experimental, confianza baja)")
+                p1, p2, p3, p4 = st.columns(4)
+                p1.markdown(theme.kpi("Corners", f"{pr['corners_total']:.1f}", f"Over 9.5: {pct(pr['corners_over_9_5'], 0)}"), unsafe_allow_html=True)
+                p2.markdown(theme.kpi("Remates", f"{pr['shots_total']:.0f}", f"a puerta {pr['sot_total']:.0f}"), unsafe_allow_html=True)
+                p3.markdown(theme.kpi("Tarjetas", f"{pr['cards_total']:.1f}", f"Over 4.5: {pct(pr['cards_over_4_5'], 0)}"), unsafe_allow_html=True)
+                p4.markdown(theme.kpi("Roja", pct(pr["red_card_prob"], 0), "alguna en el partido"), unsafe_allow_html=True)
+                st.caption("Arbitro del 2026 no disponible en el plan free: las tarjetas usan el promedio general.")
+
+        # Indicador de valor (solo si el partido tiene cuotas).
+        value = data.value_analysis()
+        if value is not None:
+            vm = value[(value["home_team"] == row["home_team"]) & (value["away_team"] == row["away_team"])]
+            if not vm.empty:
+                v = vm.iloc[0]
+                pick = {"home": row["home_team"], "draw": "Empate", "away": row["away_team"]}[v["best_bet"]]
+                st.markdown(f"**Valor vs mercado:** mayor EV en **{pick}** "
+                            f"({v['best_ev']:+.0%}, confianza {v['confidence']}).")
+                st.caption("El mercado es eficiente: un EV alto suele delatar un dato que le falta "
+                           "al modelo, no una oportunidad real.")
+
 
 # --- Validacion ------------------------------------------------------------
 with tab_val:
@@ -244,3 +271,32 @@ with tab_scorers:
                 s.style.format({"Marca en algun momento": "{:.1%}"}),
                 width="stretch", hide_index=True,
             )
+
+
+# --- Valor -----------------------------------------------------------------
+with tab_value:
+    value = data.value_analysis()
+    if value is None or value.empty:
+        st.info("Falta el analisis de valor. Corre: uv run python -m scripts.build_value")
+    else:
+        n_value = int(value["has_value"].sum())
+        media = value[value["has_value"] & (value["confidence"] == "media")]
+        c1, c2, c3 = st.columns(3)
+        c1.markdown(theme.kpi("Margen de las casas", pct(value["overround"].mean()), "overround medio"), unsafe_allow_html=True)
+        c2.markdown(theme.kpi("EV positivo", f"{n_value}/{len(value)}", "casi todo: mercado eficiente"), unsafe_allow_html=True)
+        c3.markdown(theme.kpi("Confianza media", f"{len(media)}", "EV moderado; el resto, longshots", accent=True), unsafe_allow_html=True)
+        st.warning("El modelo ve 'valor' casi en todos lados porque es menos extremo que un mercado "
+                   "eficiente. NO es un edge real: un EV alto suele delatar un dato que le falta al "
+                   "modelo. Estudio de eficiencia de mercado, no un sistema de apuestas.")
+        st.markdown("**Mayores discrepancias modelo vs mercado**")
+        show = value.sort_values("best_ev", ascending=False).head(15)[
+            ["home_team", "away_team", "best_bet", "best_ev", "confidence"]
+        ].copy()
+        show.columns = ["Local", "Visitante", "Mejor apuesta", "EV", "Confianza"]
+        st.dataframe(
+            show.style.format({"EV": "{:+.0%}"}),
+            width="stretch", hide_index=True, height=420,
+        )
+        st.caption("Backtest de la estrategia: el motor esta listo y testeado; un backtest historico "
+                   "necesitaria cuotas de seleccion de pago, asi que se alimenta de los partidos del "
+                   "Mundial a medida que se juegan.")
