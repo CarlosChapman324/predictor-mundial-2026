@@ -37,6 +37,9 @@ jobs:
       - name: Backtesting (validacion)
         run: uv run python -m scripts.build_validation
 
+      - name: Predicho vs real (fase de grupos)
+        run: uv run python -m scripts.build_predicted_vs_actual
+
       # Las fases que dependen de APIs externas no deben tumbar el job si una
       # cuota se agota: continue-on-error mantiene lo que si se actualizo.
       - name: Modelo vs mercado (cuotas)

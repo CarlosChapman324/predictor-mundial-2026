@@ -119,3 +119,13 @@ def props_predictions():
 @st.cache_data(show_spinner=False, ttl=3600)
 def value_analysis():
     return _read_parquet("value_analysis.parquet")
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def predicted_vs_actual():
+    return _read_parquet("predicted_vs_actual.parquet")
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def predicted_vs_actual_meta():
+    return _read_processed_json("predicted_vs_actual_meta.json")

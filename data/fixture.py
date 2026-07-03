@@ -68,7 +68,11 @@ def build_group_stage_schedule(
     mapping = team_to_group(groups)
     schedule["home_group"] = schedule["home_team"].map(mapping)
     schedule["away_group"] = schedule["away_team"].map(mapping)
-    # En fase de grupos ambos equipos son del mismo grupo; ese es el grupo del partido.
+    # Solo la fase de grupos: ambos equipos del MISMO grupo. Cuando arranca la
+    # eliminatoria, el historico trae cruces entre grupos distintos; se excluyen
+    # aqui (su resultado real alimenta la capa viva de eliminatorias, no este
+    # calendario de grupos, que siempre tiene 72 partidos).
+    schedule = schedule[schedule["home_group"] == schedule["away_group"]].copy()
     schedule["group"] = schedule["home_group"]
 
     venue_by_city = venues.set_index("dataset_city")[["stadium", "city", "country"]]

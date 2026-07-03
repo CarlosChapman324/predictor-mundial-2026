@@ -42,8 +42,9 @@ def pct(x: float, decimals: int = 1) -> str:
     return f"{x * 100:.{decimals}f}%"
 
 
-tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_market, tab_scorers, tab_value = st.tabs(
-    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion", "Mercado", "Goleadores", "Valor"]
+tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_real, tab_market, tab_scorers, tab_value = st.tabs(
+    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion",
+     "Predicho vs Real", "Mercado", "Goleadores", "Valor"]
 )
 
 
@@ -300,3 +301,39 @@ with tab_value:
         st.caption("Backtest de la estrategia: el motor esta listo y testeado; un backtest historico "
                    "necesitaria cuotas de seleccion de pago, asi que se alimenta de los partidos del "
                    "Mundial a medida que se juegan.")
+
+
+# --- Predicho vs Real ------------------------------------------------------
+with tab_real:
+    pva = data.predicted_vs_actual()
+    meta = data.predicted_vs_actual_meta() or {}
+    if pva is None or pva.empty:
+        st.info("Aun no hay comparacion. Corre: uv run python -m scripts.build_predicted_vs_actual")
+    else:
+        st.caption("Prediccion hecha con el modelo entrenado SOLO con datos anteriores al inicio del "
+                   "torneo (11 jun 2026), sin fuga, y comparada con los resultados reales de la fase "
+                   "de grupos. Es la prueba mas dura: el modelo contra el Mundial real, no un backtest.")
+        acc = meta.get("accuracy", float(pva["hit"].mean()))
+        avg = meta.get("avg_prob_actual", float(pva["prob_actual"].mean()))
+        c1, c2, c3 = st.columns(3)
+        c1.markdown(theme.kpi("Acierto 1X2", pct(acc, 0), f"{int(pva['hit'].sum())} de {len(pva)} partidos", accent=True), unsafe_allow_html=True)
+        c2.markdown(theme.kpi("Prob. media en lo real", pct(avg), "que dio a lo que paso"), unsafe_allow_html=True)
+        c3.markdown(theme.kpi("RPS en el torneo", f"{meta.get('rps', 0):.3f}", "menor es mejor (~0.20 buen nivel)"), unsafe_allow_html=True)
+        st.write("")
+        left, right = st.columns([3, 2])
+        with left:
+            show = pva.copy()
+            show["Partido"] = show["home_team"] + " vs " + show["away_team"]
+            show["Modelo (L/E/V)"] = show.apply(
+                lambda r: f"{r['p_home']:.0%} / {r['p_draw']:.0%} / {r['p_away']:.0%}", axis=1)
+            show["Real"] = show["home_score"].astype(int).astype(str) + "-" + show["away_score"].astype(int).astype(str)
+            show["Acierto"] = show["hit"].map({True: "Si", False: "No"})
+            table = show[["Partido", "Modelo (L/E/V)", "Real", "prob_actual", "Acierto"]].rename(
+                columns={"prob_actual": "Prob. a lo real"})
+            st.dataframe(table.style.format({"Prob. a lo real": "{:.0%}"}),
+                         width="stretch", hide_index=True, height=460)
+        with right:
+            st.markdown("**Mayores sorpresas** (lo que paso, que el modelo veia poco probable)")
+            for r in pva.sort_values("prob_actual").head(8).itertuples(index=False):
+                st.markdown(f"- **{r.home_team} {int(r.home_score)}-{int(r.away_score)} {r.away_team}** "
+                            f"({r.prob_actual:.0%})")

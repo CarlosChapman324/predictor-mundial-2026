@@ -36,6 +36,8 @@ SNAPSHOT_FILES = [
     "predictions_history.parquet",
     "props_predictions.parquet",
     "value_analysis.parquet",
+    "predicted_vs_actual.parquet",
+    "predicted_vs_actual_meta.json",
 ]
 
 
