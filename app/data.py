@@ -129,3 +129,16 @@ def predicted_vs_actual():
 @st.cache_data(show_spinner=False, ttl=3600)
 def predicted_vs_actual_meta():
     return _read_processed_json("predicted_vs_actual_meta.json")
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def group_standings():
+    return _read_parquet("group_standings.parquet")
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def knockout_results():
+    df = _read_parquet("knockout_results.parquet")
+    if df is not None:
+        df["date"] = pd.to_datetime(df["date"])
+    return df

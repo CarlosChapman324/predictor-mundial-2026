@@ -61,7 +61,10 @@ def main(download: bool = True, n_sims: int = 10_000) -> None:
     elo = pd.read_parquet(PROCESSED_DIR / "elo_current.parquet")
     final_key = dict(zip(elo["team"], elo["rating"]))
     current = pd.read_parquet(PROCESSED_DIR / "simulation_probabilities.parquet")
-    played = int(fixture["played"].sum())
+    # El eje del historico cuenta TODO lo jugado: fase de grupos + eliminatoria.
+    ko_path = PROCESSED_DIR / "knockout_results.parquet"
+    ko_played = int(len(pd.read_parquet(ko_path))) if ko_path.exists() else 0
+    played = int(fixture["played"].sum()) + ko_played
     now = datetime.now(timezone.utc).isoformat()
 
     # Ancla "sin condicionar" (partidos jugados = 0), congelada tras la primera vez.

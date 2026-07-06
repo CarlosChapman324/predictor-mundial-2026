@@ -78,3 +78,33 @@ def test_excluye_partidos_de_eliminatoria():
     schedule = fixture.build_group_stage_schedule(raw, groups, venues)
     assert len(schedule) == 1
     assert set(schedule["group"]) == {"A"}
+
+
+def test_knockout_results_extrae_cruces_y_resuelve_penales():
+    groups = pd.DataFrame(
+        [{"group": "A", "seed_position": i + 1, "team": t} for i, t in enumerate(["A1", "A2", "A3", "A4"])]
+        + [{"group": "B", "seed_position": i + 1, "team": t} for i, t in enumerate(["B1", "B2", "B3", "B4"])]
+    )
+    raw = pd.DataFrame([
+        # fase de grupos (mismo grupo): NO es eliminatoria
+        {"tournament": "FIFA World Cup", "date": "2026-06-12", "home_team": "A1", "away_team": "A2",
+         "home_score": 1, "away_score": 0},
+        # eliminatoria con ganador en 90'
+        {"tournament": "FIFA World Cup", "date": "2026-06-29", "home_team": "A1", "away_team": "B2",
+         "home_score": 2, "away_score": 1},
+        # eliminatoria empatada: la decide la tanda de penales
+        {"tournament": "FIFA World Cup", "date": "2026-06-29", "home_team": "A2", "away_team": "B1",
+         "home_score": 1, "away_score": 1},
+        # eliminatoria futura (sin marcador): se ignora
+        {"tournament": "FIFA World Cup", "date": "2026-07-04", "home_team": "A3", "away_team": "B3",
+         "home_score": None, "away_score": None},
+    ])
+    shootouts = pd.DataFrame([
+        {"date": "2026-06-29", "home_team": "A2", "away_team": "B1", "winner": "B1"},
+    ])
+    ko = fixture.knockout_results(raw, groups, shootouts)
+    assert len(ko) == 2                                   # solo cruces jugados
+    ganado = ko[ko["home_team"] == "A1"].iloc[0]
+    assert ganado["winner"] == "A1"                       # gano en 90'
+    penales = ko[ko["home_team"] == "A2"].iloc[0]
+    assert penales["winner"] == "B1"                      # lo decidio la tanda

@@ -91,6 +91,41 @@ def build_group_stage_schedule(
     return schedule.sort_values(["date", "group"]).reset_index(drop=True)
 
 
+def knockout_results(raw: pd.DataFrame, groups: pd.DataFrame, shootouts=None) -> pd.DataFrame:
+    """Cruces de eliminatoria del Mundial 2026 ya jugados, con su ganador.
+
+    Son los partidos entre equipos de grupos DISTINTOS (la fase de grupos es del
+    mismo grupo). El ganador se resuelve por marcador o, si hubo empate, por la
+    tanda de penales (shootouts). Alimenta la capa viva de la eliminatoria: el
+    motor fija estos resultados y solo re-simula lo pendiente.
+    """
+    ko = raw.loc[
+        (raw["tournament"] == WORLD_CUP_TOURNAMENT)
+        & (raw["date"].astype(str).str.startswith(WORLD_CUP_SEASON))
+        & raw["home_score"].notna()
+        & raw["away_score"].notna()
+    ].copy()
+    mapping = team_to_group(groups)
+    ko = ko[ko["home_team"].map(mapping) != ko["away_team"].map(mapping)].copy()
+
+    shootout_winner = {}
+    if shootouts is not None and not shootouts.empty:
+        recent = shootouts[shootouts["date"].astype(str).str.startswith(WORLD_CUP_SEASON)]
+        for r in recent.itertuples(index=False):
+            shootout_winner[frozenset((r.home_team, r.away_team))] = r.winner
+
+    winners = []
+    for r in ko.itertuples(index=False):
+        if r.home_score > r.away_score:
+            winners.append(r.home_team)
+        elif r.away_score > r.home_score:
+            winners.append(r.away_team)
+        else:  # empate: lo decidieron los penales
+            winners.append(shootout_winner.get(frozenset((r.home_team, r.away_team))))
+    ko["winner"] = winners
+    return ko[["date", "home_team", "away_team", "home_score", "away_score", "winner"]].reset_index(drop=True)
+
+
 def validate_fixture(
     groups: pd.DataFrame, venues: pd.DataFrame, schedule: pd.DataFrame
 ) -> None:

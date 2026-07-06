@@ -38,6 +38,8 @@ SNAPSHOT_FILES = [
     "value_analysis.parquet",
     "predicted_vs_actual.parquet",
     "predicted_vs_actual_meta.json",
+    "group_standings.parquet",
+    "knockout_results.parquet",
 ]
 
 

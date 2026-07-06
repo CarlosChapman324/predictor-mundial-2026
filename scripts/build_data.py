@@ -22,13 +22,52 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pandas as pd
+
 from data import fixture, ingest
 from model import elo
+from tournament import format2026
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
 PROCESSED_DIR = ROOT / "data" / "processed"
 REFERENCE_DIR = ROOT / "data" / "reference"
+
+
+def build_group_standings(schedule, groups, elo_current):
+    """Tabla REAL de posiciones por grupo desde los resultados jugados.
+
+    Aplica los mismos desempates 2026 del motor (head-to-head antes que la
+    diferencia global, Elo como respaldo). 'qualified' marca al 1o y al 2o y,
+    cuando la fase esta completa, tambien a los 8 mejores terceros.
+    """
+    final_key = dict(zip(elo_current["team"], elo_current["rating"]))
+    played = schedule[schedule["played"]]
+    complete = bool(schedule["played"].all())
+    rows, thirds = [], []
+    for group, block in groups.groupby("group"):
+        teams_g = block["team"].tolist()
+        results = [
+            (r.home_team, int(r.home_score), r.away_team, int(r.away_score))
+            for r in played[played["group"] == group].itertuples(index=False)
+        ]
+        ranked, overall = format2026.rank_group(teams_g, results, final_key=final_key)
+        for position, team in enumerate(ranked, start=1):
+            s = overall[team]
+            rows.append({
+                "group": group, "position": position, "team": team,
+                "played": s["played"], "points": s["points"],
+                "gf": s["gf"], "ga": s["ga"], "gd": s["gd"],
+                "qualified": position <= 2,
+            })
+            if position == 3:
+                thirds.append({"group": group, "team": team, "stats": s})
+    standings = pd.DataFrame(rows)
+    if complete and len(thirds) == 12:
+        best_teams = {t["team"] for t in format2026.select_best_thirds(thirds, final_key=final_key)}
+        third_mask = standings["team"].isin(best_teams) & (standings["position"] == 3)
+        standings.loc[third_mask, "qualified"] = True
+    return standings.sort_values(["group", "position"]).reset_index(drop=True)
 
 
 def main(download: bool = True) -> None:
@@ -65,6 +104,21 @@ def main(download: bool = True) -> None:
     played = int(schedule["played"].sum())
     print(f"  Calendario fase de grupos: {len(schedule)} partidos "
           f"({played} jugados, {len(schedule) - played} pendientes)")
+
+    # Eliminatoria ya jugada (capa viva del cuadro): cruces entre grupos distintos.
+    shootouts_csv = RAW_DIR / "shootouts.csv"
+    if download or not shootouts_csv.exists():
+        shootouts_csv = ingest.download_shootouts(RAW_DIR)
+    shootouts = ingest.load_raw(shootouts_csv)
+    knockout = fixture.knockout_results(raw, groups, shootouts)
+    ingest.save_parquet(knockout, PROCESSED_DIR / "knockout_results.parquet")
+    print(f"  Eliminatoria jugada: {len(knockout)} cruces fijados")
+
+    # Tabla real de posiciones por grupo (capa viva de la fase de grupos).
+    standings = build_group_standings(schedule, groups, elo_current)
+    ingest.save_parquet(standings, PROCESSED_DIR / "group_standings.parquet")
+    qualified = int(standings["qualified"].sum())
+    print(f"  Posiciones reales por grupo guardadas ({qualified} clasificados marcados)")
 
     # 4. Metadatos con timestamp ------------------------------------------
     meta = {

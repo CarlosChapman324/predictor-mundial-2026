@@ -32,9 +32,11 @@ if sim is None:
     st.stop()
 
 meta = data.simulation_meta() or {}
+_ko_fixed = meta.get("knockout_played", 0)
 st.caption(
     f"{meta.get('n_sims', 0):,} simulaciones Monte Carlo &middot; "
-    f"{meta.get('fixture_played', 0)} partidos ya jugados fijados"
+    f"{meta.get('fixture_played', 0)} partidos de grupos"
+    + (f" + {_ko_fixed} cruces de eliminatoria fijados" if _ko_fixed else " fijados")
 )
 
 
@@ -42,9 +44,10 @@ def pct(x: float, decimals: int = 1) -> str:
     return f"{x * 100:.{decimals}f}%"
 
 
-tab_champ, tab_evo, tab_groups, tab_path, tab_match, tab_val, tab_real, tab_market, tab_scorers, tab_value = st.tabs(
-    ["Campeon", "Evolucion", "Grupos", "Camino al titulo", "Por partido", "Validacion",
-     "Predicho vs Real", "Mercado", "Goleadores", "Valor"]
+(tab_champ, tab_evo, tab_groups, tab_ko, tab_path, tab_match, tab_val, tab_real,
+ tab_market, tab_scorers, tab_value) = st.tabs(
+    ["Campeon", "Evolucion", "Grupos", "Eliminatorias", "Camino al titulo", "Por partido",
+     "Validacion", "Predicho vs Real", "Mercado", "Goleadores", "Valor"]
 )
 
 
@@ -89,25 +92,121 @@ with tab_evo:
 # --- Grupos ----------------------------------------------------------------
 with tab_groups:
     groups = data.groups()
+    standings = data.group_standings()
     if not groups:
         st.info("Falta groups.json.")
     else:
         choice = st.selectbox("Grupo", list(groups.keys()), format_func=lambda g: f"Grupo {g}")
-        members = groups[choice]
-        gdf = sim[sim["team"].isin(members)].copy()
+        sg = standings[standings["group"] == choice] if standings is not None else None
+
+        if sg is not None and not sg.empty and sg["played"].sum() > 0:
+            # Fase de grupos con resultados reales: tabla de posiciones.
+            complete = bool((standings["played"] == 3).all())
+            t = sg.sort_values("position").copy()
+            if complete:
+                t["Estado"] = np.where(
+                    t["qualified"] & (t["position"] <= 2), "Clasificado",
+                    np.where(t["qualified"], "Clasificado (mejor 3o)", "Eliminado"),
+                )
+            show = t[["position", "team", "played", "points", "gf", "ga", "gd"]
+                     + (["Estado"] if complete else [])]
+            show.columns = ["Pos", "Seleccion", "PJ", "Pts", "GF", "GC", "DG"] + (
+                ["Estado"] if complete else [])
+            st.dataframe(show, width="stretch", hide_index=True)
+            mm = data.match_markets()
+            if mm is not None:
+                res = mm[(mm["group"] == choice) & mm["played"]].sort_values("date")
+                if not res.empty:
+                    st.markdown("**Resultados del grupo**")
+                    lines = "  \n".join(
+                        f"{r.home_team} {int(r.home_score)}-{int(r.away_score)} {r.away_team}"
+                        for r in res.itertuples(index=False)
+                    )
+                    st.markdown(lines)
+            st.caption("Tabla real con los desempates 2026 (head-to-head antes que la diferencia "
+                       "global). Clasifican el 1o y el 2o, mas los 8 mejores terceros de los 12.")
+        else:
+            # Pre-torneo: proyeccion probabilistica del grupo.
+            members = groups[choice]
+            gdf = sim[sim["team"].isin(members)].copy()
+            left, right = st.columns([3, 2])
+            with left:
+                st.plotly_chart(charts.group_bars(gdf), width="stretch")
+            with right:
+                t = gdf.sort_values("qualify", ascending=False)[
+                    ["team", "win_group", "runner_up", "qualify"]
+                ].copy()
+                t.columns = ["Seleccion", "Gana grupo", "2o", "Clasifica"]
+                st.dataframe(
+                    t.style.format({c: "{:.1%}" for c in ["Gana grupo", "2o", "Clasifica"]}),
+                    width="stretch", hide_index=True, height=200,
+                )
+            st.caption("Clasifican el 1o y el 2o de cada grupo, mas los 8 mejores terceros de los 12.")
+
+
+# --- Eliminatorias ----------------------------------------------------------
+def _knockout_round(d) -> str:
+    """Ronda de un cruce del 2026 segun su fecha (calendario oficial)."""
+    if d.month == 6 or d.day <= 3:
+        return "Dieciseisavos"
+    if d.day <= 8:
+        return "Octavos"
+    if d.day <= 12:
+        return "Cuartos"
+    if d.day <= 16:
+        return "Semifinales"
+    return "Tercer puesto" if d.day == 18 else "Final"
+
+
+with tab_ko:
+    ko = data.knockout_results()
+    if ko is None or ko.empty:
+        st.info("La eliminatoria aun no arranca: los cruces apareceran aqui al jugarse.")
+    else:
+        standings = data.group_standings()
+        # En eliminacion directa, perder un cruce te saca (el perdedor de cada partido).
+        losers = {
+            r.away_team if r.winner == r.home_team else r.home_team
+            for r in ko.itertuples(index=False) if r.winner is not None
+        }
+        if standings is not None:
+            qualified = set(standings[standings["qualified"]]["team"])
+        else:
+            qualified = set(sim["team"])
+        alive = qualified - losers
+
+        c1, c2, c3 = st.columns(3)
+        c1.markdown(theme.kpi("Cruces jugados", f"{len(ko)}", "de 31 del cuadro"), unsafe_allow_html=True)
+        c2.markdown(theme.kpi("Siguen vivos", f"{len(alive)}", "de 32 clasificados", accent=True), unsafe_allow_html=True)
+        favorito = sim[sim["team"].isin(alive)].nlargest(1, "champion")
+        if not favorito.empty:
+            f = favorito.iloc[0]
+            c3.markdown(theme.kpi(f["team"], pct(f["champion"]), "favorito al titulo"), unsafe_allow_html=True)
+
+        st.write("")
         left, right = st.columns([3, 2])
         with left:
-            st.plotly_chart(charts.group_bars(gdf), width="stretch")
+            ko = ko.sort_values("date")
+            ko["round"] = ko["date"].map(_knockout_round)
+            order = ["Dieciseisavos", "Octavos", "Cuartos", "Semifinales", "Tercer puesto", "Final"]
+            for round_name in [r for r in order if r in set(ko["round"])]:
+                st.markdown(f"**{round_name}**")
+                lines = []
+                for r in ko[ko["round"] == round_name].itertuples(index=False):
+                    home = f"**{r.home_team}**" if r.winner == r.home_team else r.home_team
+                    away = f"**{r.away_team}**" if r.winner == r.away_team else r.away_team
+                    marcador = f"{int(r.home_score)}-{int(r.away_score)}"
+                    linea = f"{home} {marcador} {away}"
+                    if r.home_score == r.away_score:
+                        linea += f" &middot; {r.winner} por penales"
+                    lines.append(linea)
+                st.markdown("  \n".join(lines), unsafe_allow_html=True)
         with right:
-            t = gdf.sort_values("qualify", ascending=False)[
-                ["team", "win_group", "runner_up", "qualify"]
-            ].copy()
-            t.columns = ["Seleccion", "Gana grupo", "2o", "Clasifica"]
-            st.dataframe(
-                t.style.format({c: "{:.1%}" for c in ["Gana grupo", "2o", "Clasifica"]}),
-                width="stretch", hide_index=True, height=200,
-            )
-        st.caption("Clasifican el 1o y el 2o de cada grupo, mas los 8 mejores terceros de los 12.")
+            vivos = sim[sim["team"].isin(alive)]
+            if not vivos.empty:
+                st.plotly_chart(charts.champion_bar(vivos, n=min(12, len(vivos))), width="stretch")
+        st.caption("Cruces reales fijados en la simulacion (el ganador en negrita; los empates "
+                   "los decidio la tanda de penales). Los eliminados quedan en 0% de campeon.")
 
 
 # --- Camino al titulo ------------------------------------------------------

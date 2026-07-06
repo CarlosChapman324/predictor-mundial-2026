@@ -190,7 +190,7 @@ def probability_evolution(history, n: int = 8):
             hovertemplate=f"{team}<br>%{{x}} jugados &middot; %{{y:.1f}}%<extra></extra>",
         ))
     fig.update_layout(title="Evolucion de la probabilidad de campeon")
-    fig.update_xaxes(title="Partidos jugados", dtick=8, showgrid=False)
+    fig.update_xaxes(title="Partidos jugados (grupos + eliminatoria)", showgrid=False)
     fig.update_yaxes(title="Campeon", ticksuffix="%")
     style_fig(fig, height=470)
     fig.update_layout(colorway=CATEGORICAL)

@@ -170,3 +170,21 @@ def test_ignore_played_trata_los_jugados_como_pendientes():
     ignored = montecarlo._prepare_group_matches(fx, model, 10, ignore_played=True)
     assert "fixed" in normal[0]       # condicionado: resultado fijo
     assert "fixed" not in ignored[0]  # sin condicionar: se muestrea
+
+
+def test_condiciona_la_eliminatoria_jugada():
+    # Capa viva del cuadro: un equipo que perdio un cruce jugado queda eliminado
+    # y no puede ser campeon, aunque el cuadro reconstruido lo empareje distinto.
+    groups = fixture_loader.load_groups(REFERENCE_DIR)
+    bracket = format2026.load_bracket(REFERENCE_DIR)
+    fx = _synthetic_fixture(groups)
+    model = _hand_model(groups["team"])
+    teams = sorted(groups["team"])
+    winner, loser = teams[0], teams[1]
+    played_knockout = {frozenset((winner, loser)): winner}
+
+    probs = montecarlo.run_monte_carlo(
+        fx, model, bracket, n_sims=200, seed=0, played_knockout=played_knockout
+    ).set_index("team")
+    assert probs.loc[loser, "champion"] == 0.0   # eliminado: nunca campeon
+    assert probs["champion"].sum() == pytest.approx(1.0)

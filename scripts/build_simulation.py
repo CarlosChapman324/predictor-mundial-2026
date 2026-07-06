@@ -82,11 +82,21 @@ def main(n_sims: int) -> None:
     elo = pd.read_parquet(PROCESSED_DIR / "elo_current.parquet")
     final_key = dict(zip(elo["team"], elo["rating"]))
 
+    # Cruces de eliminatoria ya jugados: se fijan (capa viva del cuadro).
+    played_knockout = {}
+    ko_path = PROCESSED_DIR / "knockout_results.parquet"
+    if ko_path.exists():
+        ko = pd.read_parquet(ko_path)
+        ko = ko[ko["winner"].notna()]
+        played_knockout = {frozenset((r.home_team, r.away_team)): r.winner
+                           for r in ko.itertuples(index=False)}
+
     played = int(fixture["played"].sum())
     print(f"Corriendo {n_sims:,} simulaciones del torneo "
-          f"({played} partidos ya jugados se fijan, {len(fixture) - played} se simulan)...")
+          f"({played} de grupos + {len(played_knockout)} de eliminatoria fijados)...")
     probs = montecarlo.run_monte_carlo(
-        fixture, model, bracket, n_sims=n_sims, final_key=final_key, seed=0
+        fixture, model, bracket, n_sims=n_sims, final_key=final_key, seed=0,
+        played_knockout=played_knockout,
     )
 
     probs.to_parquet(PROCESSED_DIR / "simulation_probabilities.parquet", index=False)
@@ -94,6 +104,7 @@ def main(n_sims: int) -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "n_sims": n_sims,
         "fixture_played": played,
+        "knockout_played": len(played_knockout),
     }
     (PROCESSED_DIR / "simulation_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 

@@ -22,6 +22,7 @@ import requests
 # URL cruda del CSV principal. Lo dejamos como constante para que sea facil de
 # auditar y de cambiar si la fuente se mueve.
 RESULTS_URL = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
+SHOOTOUTS_URL = "https://raw.githubusercontent.com/martj42/international_results/master/shootouts.csv"
 
 # ---------------------------------------------------------------------------
 # Continuidad de selecciones (decision de modelado, configurable)
@@ -86,6 +87,17 @@ def download_results(raw_dir: Path | str, *, timeout: int = 60) -> Path:
     raw_dir.mkdir(parents=True, exist_ok=True)
     destination = raw_dir / "results.csv"
     response = requests.get(RESULTS_URL, timeout=timeout)
+    response.raise_for_status()
+    destination.write_bytes(response.content)
+    return destination
+
+
+def download_shootouts(raw_dir: Path | str, *, timeout: int = 60) -> Path:
+    """Descarga shootouts.csv (ganadores por penales) a raw_dir. Con red."""
+    raw_dir = Path(raw_dir)
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    destination = raw_dir / "shootouts.csv"
+    response = requests.get(SHOOTOUTS_URL, timeout=timeout)
     response.raise_for_status()
     destination.write_bytes(response.content)
     return destination

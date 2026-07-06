@@ -88,7 +88,8 @@ def _advance_probability(model: FittedGoalModel, teams, max_goals: int) -> dict:
     return p
 
 
-def _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko_randoms):
+def _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko_randoms,
+                     played_knockout=None):
     """Resuelve un torneo completo a partir de los resultados de grupo ya decididos.
 
     Devuelve (positions, qualified, stage, champion).
@@ -116,11 +117,26 @@ def _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko
     winner_of = {}
     k = 0  # indice en el vector de aleatorios de eliminatorias
 
+    # Equipos ya eliminados en la realidad (perdieron un cruce jugado): aunque el
+    # cuadro reconstruido los empareje distinto, nunca deben avanzar.
+    eliminated = set()
+    if played_knockout:
+        for pair, winner in played_knockout.items():
+            eliminated.update(t for t in pair if t != winner)
+
     def resolve(a, b):
         nonlocal k
-        win = a if ko_randoms[k] < padv[a][b] else b
+        r = ko_randoms[k]
         k += 1
-        return win
+        if played_knockout:
+            fixed = played_knockout.get(frozenset((a, b)))
+            if fixed is not None:
+                return fixed          # cruce ya jugado: se fija con el resultado real
+            if a in eliminated and b not in eliminated:
+                return b              # a ya quedo fuera en la realidad
+            if b in eliminated and a not in eliminated:
+                return a
+        return a if r < padv[a][b] else b
 
     # Ronda de 32 (cruces sembrados).
     for m in bracket["rounds"]["round_of_32"]:
@@ -146,7 +162,7 @@ def _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko
 
 
 def simulate_tournament(fixture, model, bracket, *, final_key=None, max_goals=10, rng=None,
-                        ignore_played=False):
+                        ignore_played=False, played_knockout=None):
     """Simula UN torneo. Util para tests y para inspeccionar una corrida."""
     rng = rng or np.random.default_rng()
     prepared = _prepare_group_matches(fixture, model, max_goals, ignore_played=ignore_played)
@@ -163,7 +179,8 @@ def simulate_tournament(fixture, model, bracket, *, final_key=None, max_goals=10
         group_results[match["group"]].append((match["team_a"], ga, match["team_b"], gb))
 
     ko_randoms = rng.random(40)
-    return _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko_randoms)
+    return _play_tournament(group_to_teams, group_results, padv, bracket, final_key, ko_randoms,
+                            played_knockout)
 
 
 def _group_structure(prepared):
@@ -178,7 +195,7 @@ def _group_structure(prepared):
 
 def run_monte_carlo(
     fixture, model, bracket, *, n_sims=10_000, final_key=None, max_goals=10, seed=0,
-    ignore_played=False,
+    ignore_played=False, played_knockout=None,
 ) -> pd.DataFrame:
     """Corre n_sims torneos y agrega las probabilidades por seleccion.
 
@@ -227,7 +244,7 @@ def run_monte_carlo(
                 group_results[g].append((m["team_a"], int(goals_a[i, s]), m["team_b"], int(goals_b[i, s])))
 
         positions, qualified, stage, champion = _play_tournament(
-            group_to_teams, group_results, padv, bracket, final_key, ko_randoms[s]
+            group_to_teams, group_results, padv, bracket, final_key, ko_randoms[s], played_knockout
         )
 
         for team, pos in positions.items():
