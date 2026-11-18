@@ -1,16 +1,16 @@
 {
-  "intercept": 0.10777406236858994,
-  "home_advantage": 0.2226789319831791,
-  "rho": -0.05252874662815433,
+  "intercept": 0.10967711711676568,
+  "home_advantage": 0.2331824182952249,
+  "rho": -0.05721585810843962,
   "meta": {
-    "n_matches": 11658,
-    "n_teams": 252,
-    "reference_date": "2026-10-06",
+    "n_matches": 11620,
+    "n_teams": 254,
+    "reference_date": "2026-11-17",
     "half_life_days": 730.0,
     "max_age_years": 12.0,
     "min_matches": 10,
     "l2": 1.0,
     "converged": true,
-    "final_nll": 32022.349906773958
+    "final_nll": 31999.552421514756
   }
 }
